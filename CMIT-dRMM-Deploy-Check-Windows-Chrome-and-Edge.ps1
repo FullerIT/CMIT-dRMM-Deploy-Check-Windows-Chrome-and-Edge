@@ -1,7 +1,7 @@
 <#
 CMIT-dRMM-Deploy-Check-Windows-Chrome-and-Edge.ps1
 pellis@cmitsolutions.com
-2025.12.01.001
+2025.12.02.001
 
 Please read the notes.
 
@@ -44,13 +44,25 @@ $showNotifications = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; Thi
 $enableValidPageBadge = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Show Valid Page Badge" option in the extension settings.
 $enablePageBlocking = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable Page Blocking" option in the extension settings.
 $forceToolbarPin = 1 # 0 = Not pinned, 1 = Force pinned to toolbar; default is 1
-$enableCippReporting = $env:Reporting # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable CIPP Reporting" option in the extension settings.
+[int]$enableCippReporting = "$env:Reporting" # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable CIPP Reporting" option in the extension settings.
 $cippServerUrl = "$env:CIPPServerURL" # This will set the "CIPP Server URL" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid URL including the protocol (e.g., https://cipp.cyberdrain.com). Can be vanity URL or the default azurestaticapps.net domain.
 $cippTenantId = "$env:M365TenantID" # This will set the "Tenant ID/Domain" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid Tenant ID.
 $customRulesUrl = "$env:customRulesUrl" # This will set the "Config URL" option in the Detection Configuration settings; default is blank.
 $updateInterval = 24 # This will set the "Update Interval" option in the Detection Configuration settings; default is 24 (hours). Range: 1-168 hours (1 hour to 1 week).
-$urlAllowlist = @($env:urlAllowlist) # This will set the "URL Allowlist" option in the Detection Configuration settings; default is blank; if you want to add multiple URLs, add them as a comma-separated list within the brackets (e.g., @("https://example1.com", "https://example2.com")). Supports simple URLs with * wildcard (e.g., https://*.example.com) or advanced regex patterns (e.g., ^https:\/\/(www\.)?example\.com\/.*$).
+$urlAllowlist = @("$env:urlAllowlist") # This will set the "URL Allowlist" option in the Detection Configuration settings; default is blank; if you want to add multiple URLs, add them as a comma-separated list within the brackets (e.g., @("https://example1.com", "https://example2.com")). Supports simple URLs with * wildcard (e.g., https://*.example.com) or advanced regex patterns (e.g., ^https:\/\/(www\.)?example\.com\/.*$).
 $enableDebugLogging = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
+
+write-host $showNotifications
+write-host $enableValidPageBadge
+write-host $enablePageBlocking
+write-host $forceToolbarPin
+write-host $enableCippReporting
+write-host $cippServerUrl
+write-host $cippTenantId
+write-host $customRulesUrl
+write-host $updateInterval
+write-host $urlAllowlist
+write-host $enableDebugLogging
 
 # Custom Branding Settings
 $companyName = "$env:companyName" # This will set the "Company Name" option in the Custom Branding settings; default is "CyberDrain".
