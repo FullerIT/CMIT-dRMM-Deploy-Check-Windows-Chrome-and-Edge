@@ -1,7 +1,7 @@
 <#
 CMIT-dRMM-Deploy-Check-Windows-Chrome-and-Edge.ps1
 pellis@cmitsolutions.com
-2025.12.02.001
+2025.12.02.003
 
 Please read the notes.
 
@@ -20,7 +20,7 @@ You will need to set the variables for your own CIPP site also.
 
 No warranty, use at your own risk, always test first.
 
-Changelog: Fixed tenantId check
+Changelog: Fixing Boolean Vars added var debug section
 
 #>
 
@@ -44,13 +44,27 @@ $showNotifications = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; Thi
 $enableValidPageBadge = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Show Valid Page Badge" option in the extension settings.
 $enablePageBlocking = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable Page Blocking" option in the extension settings.
 $forceToolbarPin = 1 # 0 = Not pinned, 1 = Force pinned to toolbar; default is 1
-[int]$enableCippReporting = "$env:Reporting" # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable CIPP Reporting" option in the extension settings.
+if ($env:Reporting -match 'true') { $enableCippReporting = 1 } else { $enableCippReporting = 0 } # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable CIPP Reporting" option in the extension settings.
 $cippServerUrl = "$env:CIPPServerURL" # This will set the "CIPP Server URL" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid URL including the protocol (e.g., https://cipp.cyberdrain.com). Can be vanity URL or the default azurestaticapps.net domain.
 $cippTenantId = "$env:M365TenantID" # This will set the "Tenant ID/Domain" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid Tenant ID.
 $customRulesUrl = "$env:customRulesUrl" # This will set the "Config URL" option in the Detection Configuration settings; default is blank.
 $updateInterval = 24 # This will set the "Update Interval" option in the Detection Configuration settings; default is 24 (hours). Range: 1-168 hours (1 hour to 1 week).
 $urlAllowlist = @("$env:urlAllowlist") # This will set the "URL Allowlist" option in the Detection Configuration settings; default is blank; if you want to add multiple URLs, add them as a comma-separated list within the brackets (e.g., @("https://example1.com", "https://example2.com")). Supports simple URLs with * wildcard (e.g., https://*.example.com) or advanced regex patterns (e.g., ^https:\/\/(www\.)?example\.com\/.*$).
 $enableDebugLogging = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
+
+# Custom Branding Settings
+$companyName = "$env:companyName" # This will set the "Company Name" option in the Custom Branding settings; default is "CyberDrain".
+$companyURL = "$env:companyURL" # This will set the Company URL option in the Custom Branding settings; default is "https://cyberdrain.com"; Must include the protocol (e.g., https://).
+$productName = "$env:productName" # This will set the "Product Name" option in the Custom Branding settings; default is "Check - Phishing Protection".
+$supportEmail = "$env:supportEmail" # This will set the "Support Email" option in the Custom Branding settings; default is blank.
+$primaryColor = "$env:primaryColor" # This will set the "Primary Color" option in the Custom Branding settings; default is "#F77F00"; must be a valid hex color code (e.g., #FFFFFF).
+$logoUrl = "$env:logoUrl" # This will set the "Logo URL" option in the Custom Branding settings; default is blank. Must be a valid URL including the protocol (e.g., https://example.com/logo.png); protocol must be https; recommended size is 48x48 pixels with a maximum of 128x128.
+
+# Extension Settings
+# These settings control how the extension is installed and what permissions it has. It is recommended to leave these at their default values unless you have a specific need to change them.
+$installationMode = "force_installed"
+
+#<# Debug Vars
 
 write-host $showNotifications
 write-host $enableValidPageBadge
@@ -64,17 +78,9 @@ write-host $updateInterval
 write-host $urlAllowlist
 write-host $enableDebugLogging
 
-# Custom Branding Settings
-$companyName = "$env:companyName" # This will set the "Company Name" option in the Custom Branding settings; default is "CyberDrain".
-$companyURL = "$env:companyURL" # This will set the Company URL option in the Custom Branding settings; default is "https://cyberdrain.com"; Must include the protocol (e.g., https://).
-$productName = "$env:productName" # This will set the "Product Name" option in the Custom Branding settings; default is "Check - Phishing Protection".
-$supportEmail = "$env:supportEmail" # This will set the "Support Email" option in the Custom Branding settings; default is blank.
-$primaryColor = "$env:primaryColor" # This will set the "Primary Color" option in the Custom Branding settings; default is "#F77F00"; must be a valid hex color code (e.g., #FFFFFF).
-$logoUrl = "$env:logoUrl" # This will set the "Logo URL" option in the Custom Branding settings; default is blank. Must be a valid URL including the protocol (e.g., https://example.com/logo.png); protocol must be https; recommended size is 48x48 pixels with a maximum of 128x128.
 
-# Extension Settings
-# These settings control how the extension is installed and what permissions it has. It is recommended to leave these at their default values unless you have a specific need to change them.
-$installationMode = "force_installed"
+#>
+
 
 # If reporting is disabled, skip the check
 if (-not $enableCippReporting) {
