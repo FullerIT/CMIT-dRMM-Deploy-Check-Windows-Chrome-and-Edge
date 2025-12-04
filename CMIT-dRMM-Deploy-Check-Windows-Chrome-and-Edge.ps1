@@ -1,7 +1,7 @@
 <#
 CMIT-dRMM-Deploy-Check-Windows-Chrome-and-Edge.ps1
 pellis@cmitsolutions.com
-2025.12.02.003
+2025.12.02.005
 
 Please read the notes.
 
@@ -40,17 +40,17 @@ $edgeManagedStorageKey = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\3rdparty\extens
 $edgeExtensionSettingsKey = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionSettings\$edgeExtensionId"
 
 # Extension Configuration Settings
-$showNotifications = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Show Notifications" option in the extension settings.
-$enableValidPageBadge = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Show Valid Page Badge" option in the extension settings.
-$enablePageBlocking = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable Page Blocking" option in the extension settings.
-$forceToolbarPin = 1 # 0 = Not pinned, 1 = Force pinned to toolbar; default is 1
+if ($env:showNotifications -match 'false') { $showNotifications = 0 } else { $showNotifications = 1 } $showNotifications = 1 # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Show Notifications" option in the extension settings.
+if ($env:enableValidPageBadge -match 'true') { $enableValidPageBadge = 1 } else { $enableValidPageBadge = 0 } # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Show Valid Page Badge" option in the extension settings.
+if ($env:enablePageBlocking -match 'false') { $enablePageBlocking = 0 } else { $enablePageBlocking = 1 } # 0 = Unchecked, 1 = Checked (Enabled); default is 1; This will set the "Enable Page Blocking" option in the extension settings.
+if ($env:forceToolbarPin -match 'false') { $forceToolbarPin = 0 } else { $forceToolbarPin = 1 } # 0 = Not pinned, 1 = Force pinned to toolbar; default is 1
 if ($env:Reporting -match 'true') { $enableCippReporting = 1 } else { $enableCippReporting = 0 } # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable CIPP Reporting" option in the extension settings.
 $cippServerUrl = "$env:CIPPServerURL" # This will set the "CIPP Server URL" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid URL including the protocol (e.g., https://cipp.cyberdrain.com). Can be vanity URL or the default azurestaticapps.net domain.
 $cippTenantId = "$env:M365TenantID" # This will set the "Tenant ID/Domain" option in the extension settings; default is blank; if you set $enableCippReporting to 1, you must set this to a valid Tenant ID.
 $customRulesUrl = "$env:customRulesUrl" # This will set the "Config URL" option in the Detection Configuration settings; default is blank.
 $updateInterval = 24 # This will set the "Update Interval" option in the Detection Configuration settings; default is 24 (hours). Range: 1-168 hours (1 hour to 1 week).
-$urlAllowlist = @("$env:urlAllowlist") # This will set the "URL Allowlist" option in the Detection Configuration settings; default is blank; if you want to add multiple URLs, add them as a comma-separated list within the brackets (e.g., @("https://example1.com", "https://example2.com")). Supports simple URLs with * wildcard (e.g., https://*.example.com) or advanced regex patterns (e.g., ^https:\/\/(www\.)?example\.com\/.*$).
-$enableDebugLogging = 0 # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
+$urlAllowlist = ($env:urlAllowlist -split ',') | ForEach-Object { $_.Trim() } # This will set the "URL Allowlist" option in the Detection Configuration settings; default is blank; if you want to add multiple URLs, add them as a comma-separated list within the brackets (e.g., @("https://example1.com", "https://example2.com")). Supports simple URLs with * wildcard (e.g., https://*.example.com) or advanced regex patterns (e.g., ^https:\/\/(www\.)?example\.com\/.*$).
+if ($env:enableDebugLogging -match 'true') { $enableDebugLogging = 1 } else { $enableDebugLogging = 0 } # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
 
 # Custom Branding Settings
 $companyName = "$env:companyName" # This will set the "Company Name" option in the Custom Branding settings; default is "CyberDrain".
@@ -76,6 +76,7 @@ write-host $cippTenantId
 write-host $customRulesUrl
 write-host $updateInterval
 write-host $urlAllowlist
+write-host $urlAllowlist.Count
 write-host $enableDebugLogging
 
 
