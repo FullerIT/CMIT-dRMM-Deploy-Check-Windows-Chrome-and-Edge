@@ -1,7 +1,7 @@
 <#
 CMIT-dRMM-Deploy-Check-Windows-Chrome-and-Edge.ps1
 pellis@cmitsolutions.com
-2025.12.02.005
+2025.12.22.001
 
 Please read the notes.
 
@@ -20,7 +20,7 @@ You will need to set the variables for your own CIPP site also.
 
 No warranty, use at your own risk, always test first.
 
-Changelog: Fixing Boolean Vars added var debug section
+Changelog: Just a refresh to sync changes from the source file and re-testing it and it now does the exception list properly
 
 #>
 
@@ -156,7 +156,31 @@ function Configure-ExtensionSettings {
     New-ItemProperty -Path $customBrandingKey -Name "supportEmail" -PropertyType String -Value $supportEmail -Force | Out-Null
     New-ItemProperty -Path $customBrandingKey -Name "primaryColor" -PropertyType String -Value $primaryColor -Force | Out-Null
     New-ItemProperty -Path $customBrandingKey -Name "logoUrl" -PropertyType String -Value $logoUrl -Force | Out-Null
+   # Create and configure generic webhook
+    $genericWebhookKey = "$ManagedStorageKey\genericWebhook"
+    if (!(Test-Path $genericWebhookKey)) {
+        New-Item -Path $genericWebhookKey -Force | Out-Null
+    }
 
+    # Set generic webhook settings
+    New-ItemProperty -Path $genericWebhookKey -Name "enabled" -PropertyType DWord -Value $enableGenericWebhook -Force | Out-Null
+    New-ItemProperty -Path $genericWebhookKey -Name "url" -PropertyType String -Value $webhookUrl -Force | Out-Null
+
+    # Create and configure webhook events list
+    $webhookEventsKey = "$genericWebhookKey\events"
+    if (!(Test-Path $webhookEventsKey)) {
+        New-Item -Path $webhookEventsKey -Force | Out-Null
+    }
+
+    # Clear any existing properties
+    Remove-ItemProperty -Path $webhookEventsKey -Name * -Force | Out-Null
+
+    # Set webhook events with names starting from 1
+    for ($i = 0; $i -lt $webhookEvents.Count; $i++) {
+        $propertyName = ($i + 1).ToString()
+        $propertyValue = $webhookEvents[$i]
+        New-ItemProperty -Path $webhookEventsKey -Name $propertyName -PropertyType String -Value $propertyValue -Force | Out-Null
+    }
     # Create and configure extension settings
     if (!(Test-Path $ExtensionSettingsKey)) {
         New-Item -Path $ExtensionSettingsKey -Force | Out-Null
