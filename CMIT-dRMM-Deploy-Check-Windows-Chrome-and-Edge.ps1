@@ -1,7 +1,7 @@
 <#
 CMIT-dRMM-Deploy-Check-Windows-Chrome-and-Edge.ps1
 pellis@cmitsolutions.com
-2025.12.22.001
+2026.04.07.001
 
 Please read the notes.
 
@@ -50,12 +50,21 @@ $cippTenantId = "$env:M365TenantID" # This will set the "Tenant ID/Domain" optio
 $customRulesUrl = "$env:customRulesUrl" # This will set the "Config URL" option in the Detection Configuration settings; default is blank.
 $updateInterval = 24 # This will set the "Update Interval" option in the Detection Configuration settings; default is 24 (hours). Range: 1-168 hours (1 hour to 1 week).
 $urlAllowlist = ($env:urlAllowlist -split ',') | ForEach-Object { $_.Trim() } # This will set the "URL Allowlist" option in the Detection Configuration settings; default is blank; if you want to add multiple URLs, add them as a comma-separated list within the brackets (e.g., @("https://example1.com", "https://example2.com")). Supports simple URLs with * wildcard (e.g., https://*.example.com) or advanced regex patterns (e.g., ^https:\/\/(www\.)?example\.com\/.*$).
+if ($env:domainSquattingEnabled -match 'false') { $domainSquattingEnabled = 0 } else { $domainSquattingEnabled = 1 } # 0 = Disabled, 1 = Enabled; default is 1; controls domain squatting detection from managed policy/config.
 if ($env:enableDebugLogging -match 'true') { $enableDebugLogging = 1 } else { $enableDebugLogging = 0 } # 0 = Unchecked, 1 = Checked (Enabled); default is 0; This will set the "Enable Debug Logging" option in the Activity Log settings.
+
+# Generic Webhook Settings
+if ($env:enableGenericWebhook -match 'true') { $enableGenericWebhook = 1 } else {  $enableGenericWebhook = 0 } # 0 = Disabled, 1 = Enabled; default is 0; This will enable the generic webhook for sending detection events to a custom endpoint.
+$webhookUrl = "" # This will set the "Webhook URL" option; default is blank; if you set $enableGenericWebhook to 1, you must set this to a valid URL including the protocol (e.g., https://webhook.example.com/endpoint).
+$webhookEvents = @() # This will set the "Event Types" to send to the webhook; default is blank; if you set $enableGenericWebhook to 1, you can specify which events to send. Available events: "detection_alert", "false_positive_report", "page_blocked", "rogue_app_detected", "threat_detected", "validation_event". Example: @("detection_alert", "page_blocked", "threat_detected").
+                                                                                                                                                           
 
 # Custom Branding Settings
 $companyName = "$env:companyName" # This will set the "Company Name" option in the Custom Branding settings; default is "CyberDrain".
 $companyURL = "$env:companyURL" # This will set the Company URL option in the Custom Branding settings; default is "https://cyberdrain.com"; Must include the protocol (e.g., https://).
+$supportUrl = "$env:supportUrl" # This will set the "Support URL" option in the Custom Branding settings; default is blank.
 $productName = "$env:productName" # This will set the "Product Name" option in the Custom Branding settings; default is "Check - Phishing Protection".
+$privacyPolicyUrl = "$env:privacyPolicyUrl" # This will set the "Privacy URL" option in the Custom Branding settings; default is blank.                                                                                                                
 $supportEmail = "$env:supportEmail" # This will set the "Support Email" option in the Custom Branding settings; default is blank.
 $primaryColor = "$env:primaryColor" # This will set the "Primary Color" option in the Custom Branding settings; default is "#F77F00"; must be a valid hex color code (e.g., #FFFFFF).
 $logoUrl = "$env:logoUrl" # This will set the "Logo URL" option in the Custom Branding settings; default is blank. Must be a valid URL including the protocol (e.g., https://example.com/logo.png); protocol must be https; recommended size is 48x48 pixels with a maximum of 128x128.
@@ -77,8 +86,11 @@ write-host $customRulesUrl
 write-host $updateInterval
 write-host $urlAllowlist
 write-host $urlAllowlist.Count
+write-host $domainSquattingEnabled
 write-host $enableDebugLogging
-
+write-host $enableGenericWebhook
+write-host $webhookUrl
+write-host $webhookEvents
 
 #>
 
@@ -127,6 +139,12 @@ function Configure-ExtensionSettings {
     New-ItemProperty -Path $ManagedStorageKey -Name "updateInterval" -PropertyType DWord -Value $updateInterval -Force | Out-Null
     New-ItemProperty -Path $ManagedStorageKey -Name "enableDebugLogging" -PropertyType DWord -Value $enableDebugLogging -Force | Out-Null
 
+    # Create and configure domain squatting policy settings
+    $domainSquattingKey = "$ManagedStorageKey\domainSquatting"
+    if (!(Test-Path $domainSquattingKey)) {
+        New-Item -Path $domainSquattingKey -Force | Out-Null
+    }
+    New-ItemProperty -Path $domainSquattingKey -Name "enabled" -PropertyType DWord -Value $domainSquattingEnabled -Force | Out-Null
     # Create and configure URL allow list
     $urlAllowlistKey = "$ManagedStorageKey\urlAllowlist"
     if (!(Test-Path $urlAllowlistKey)) {
@@ -154,6 +172,9 @@ function Configure-ExtensionSettings {
     New-ItemProperty -Path $customBrandingKey -Name "companyURL" -PropertyType String -Value $companyURL -Force | Out-Null
     New-ItemProperty -Path $customBrandingKey -Name "productName" -PropertyType String -Value $productName -Force | Out-Null
     New-ItemProperty -Path $customBrandingKey -Name "supportEmail" -PropertyType String -Value $supportEmail -Force | Out-Null
+    New-ItemProperty -Path $customBrandingKey -Name "supportUrl" -PropertyType String -Value $supportUrl -Force | Out-Null
+    New-ItemProperty -Path $customBrandingKey -Name "privacyPolicyUrl" -PropertyType String -Value $privacyPolicyUrl -Force | Out-Null
+    New-ItemProperty -Path $customBrandingKey -Name "aboutUrl" -PropertyType String -Value $aboutUrl -Force | Out-Null
     New-ItemProperty -Path $customBrandingKey -Name "primaryColor" -PropertyType String -Value $primaryColor -Force | Out-Null
     New-ItemProperty -Path $customBrandingKey -Name "logoUrl" -PropertyType String -Value $logoUrl -Force | Out-Null
    # Create and configure generic webhook
